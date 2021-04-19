@@ -40,6 +40,17 @@ enum mf_type {
   WRITE_ACK
 };
 
+enum hist_type_t{
+	HIST_PROBE = 0,
+	HIST_REJECT,
+	HIST_REJECT_FULL,
+	HIST_FILL,
+	HIST_DATA,
+	HIST_FORWARD,
+	HIST_INVALIDATE,
+	HIST_FLIT
+};
+
 #define MF_TUP_BEGIN(X) enum X {
 #define MF_TUP(X) X
 #define MF_TUP_END(X) \
@@ -128,12 +139,31 @@ class mem_fetch {
   mem_fetch *get_original_mf() { return original_mf; }
   mem_fetch *get_original_wr_mf() { return original_wr_mf; }
 
+// HIST
+  enum hist_type_t hist_type(){ return m_hist_type;}
+  new_addr_type    hist_adr() { return m_hist_adr; }
+  unsigned         hist_src() { return m_hist_src; }
+  unsigned         hist_dst() { return m_hist_dst; }
+  unsigned long long hist_time(){ return m_hist_timestamp; }
+
+  void hist_set_type( enum hist_type_t type ){ m_hist_type = type; }
+  void hist_set_adr( new_addr_type adr ){ m_hist_adr = adr; }
+  void hist_set_src( unsigned src ){ m_hist_src = src; }
+  void hist_set_dst( unsigned dst );
+
  private:
   // request source information
   unsigned m_request_uid;
   unsigned m_sid;
   unsigned m_tpc;
   unsigned m_wid;
+  
+// HIST  
+  enum hist_type_t m_hist_type;
+  new_addr_type    m_hist_adr;
+  unsigned         m_hist_src;
+  unsigned         m_hist_dst;
+  unsigned long long m_hist_timestamp;
 
   // where is this request now?
   enum mem_fetch_status m_status;

@@ -16,11 +16,6 @@ cd
 git clone https://github.com/gpgpu-sim/gpgpu-sim_distribution.git
 git clone https://github.com/gpgpu-sim/gpgpu-sim_simulations.git
 
-
-mkdir -p ~/GCC
-ln -s /usr/bin/gcc-6 ~/GCC/gcc
-ln -s /usr/bin/g++-6 ~/GCC/g++
-
 export CUDA_INSTALL_PATH=/usr/local/cuda-11.3/
 export PATH=$CUDA_INSTALL_PATH/bin:$PATH
 
@@ -39,6 +34,6 @@ rm -rf ~/test_run && mkdir -p ~/test_run
 cp -r ~/gpgpu-sim_distribution/configs/tested-cfgs/SM7_TITANV/* ~/test_run
 cd ~/test_run/. 
 source ~/gpgpu-sim_distribution/setup_environment release
-~/gpgpu-sim_simulations/benchmarks/src/cuda/rodinia/3.1/cuda/backprop/backprop 1024
+~/gpgpu-sim_simulations/benchmarks/src/cuda/rodinia/3.1/cuda/backprop/backprop 1024 | grep HIST
 
 

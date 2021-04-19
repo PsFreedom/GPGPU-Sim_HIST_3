@@ -425,6 +425,14 @@ class gpgpu_sim_config : public power_config,
   unsigned long long liveness_message_freq;
 
   friend class gpgpu_sim;
+  
+  // HIST
+  unsigned hist_nset;
+  unsigned hist_assoc;
+  unsigned hist_range;
+  unsigned hist_flit;
+  unsigned hist_queue;
+
 };
 
 struct occupancy_stats {

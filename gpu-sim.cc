@@ -553,6 +553,18 @@ void gpgpu_sim_config::reg_options(option_parser_t opp) {
   m_shader_config.reg_options(opp);
   m_memory_config.reg_options(opp);
   power_config::reg_options(opp);
+// HIST
+  option_parser_register(opp, "-hist_n_set", OPT_UINT32, &hist_nset, 
+            "number of HIST set", "4");
+  option_parser_register(opp, "-hist_assoc_way", OPT_UINT32, &hist_assoc, 
+            "number of HIST assoc ways", "32");
+  option_parser_register(opp, "-hist_n_range", OPT_UINT32, &hist_range, 
+            "distance of HIST range", "9");
+  option_parser_register(opp, "-hist_n_flit", OPT_UINT32, &hist_flit, 
+            "number of HIST flit", "8");
+  option_parser_register(opp, "-hist_n_queue", OPT_UINT32, &hist_queue, 
+            "size of HIST queue", "32");
+// HIST
   option_parser_register(opp, "-gpgpu_max_cycle", OPT_INT64, &gpu_max_cycle_opt,
                          "terminates gpu simulation early (0 = no limit)", "0");
   option_parser_register(opp, "-gpgpu_max_insn", OPT_INT64, &gpu_max_insn_opt,
@@ -855,6 +867,12 @@ gpgpu_sim::gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
   gpu_tot_sim_cycle_parition_util = 0;
   partiton_replys_in_parallel = 0;
   partiton_replys_in_parallel_total = 0;
+
+// HIST network initialization
+  printf("HIST >> Hist Network Initialization\n");
+  printf("HIST >> total SM       %u\n", config.num_shader());
+  printf("HIST >> total Cluster  %u\n", config.num_cluster());
+  printf("HIST >> SM per Cluster %u\n", m_shader_config->n_simt_cores_per_cluster);
 
   m_memory_partition_unit =
       new memory_partition_unit *[m_memory_config->m_n_mem];

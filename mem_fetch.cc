@@ -139,3 +139,9 @@ unsigned mem_fetch::get_num_flits(bool simt_to_mem) {
 
   return (sz / icnt_flit_size) + ((sz % icnt_flit_size) ? 1 : 0);
 }
+
+void mem_fetch::hist_set_dst( unsigned dst )
+{
+	m_hist_dst       = dst;
+	m_hist_timestamp = (gpu_sim_cycle+gpu_tot_sim_cycle);
+}
