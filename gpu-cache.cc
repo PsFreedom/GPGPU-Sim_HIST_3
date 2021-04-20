@@ -1140,7 +1140,21 @@ void baseline_cache::send_read_request(new_addr_type addr,
         mshr_addr, mf->get_addr(), cache_index, mf->get_data_size(), m_config);
     mf->set_data_size(m_config.get_atom_sz());
     mf->set_addr(mshr_addr);
-    m_miss_queue.push_back(mf);
+// HIST Begin
+    if( m_core_id >= 0 )
+    {
+        printf("HIST >> m_core_id %d | Home %u\n", m_core_id, hist_home(mf->get_addr()) );
+        mf->hist_set_type( HIST_PROBE );
+        mf->hist_set_adr( mf->get_addr() );
+        mf->hist_set_src( m_core_id );
+        mf->hist_set_dst( hist_home(mf->get_addr()) );
+        
+        m_miss_queue.push_back(mf);
+    }
+    else{
+        m_miss_queue.push_back(mf);
+    }
+// HIST End
     mf->set_status(m_miss_queue_status, time);
     if (!wa) events.push_back(cache_event(READ_REQUEST_SENT));
 

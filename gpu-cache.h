@@ -38,6 +38,9 @@
 
 #include <iostream>
 #include "addrdec.h"
+#include "hist_lib.h"
+#include "hist_table.h"
+#include "hist_network.h"
 
 #define MAX_DEFAULT_CACHE_SIZE_MULTIBLIER 4
 
@@ -587,6 +590,9 @@ class cache_config {
     m_atom_sz = (m_cache_type == SECTOR) ? SECTOR_SIZE : m_line_sz;
     m_sector_sz_log2 = LOGB2(SECTOR_SIZE);
     original_m_assoc = m_assoc;
+    
+    hist_line_sz      = m_line_sz;
+    hist_line_sz_log2 = m_line_sz_log2;
 
     // For more details about difference between FETCH_ON_WRITE and WRITE
     // VALIDAE policies Read: Jouppi, Norman P. "Cache write policies and
@@ -1139,6 +1145,7 @@ class baseline_cache : public cache_t {
       : m_config(config),
         m_tag_array(new tag_array(config, core_id, type_id)),
         m_mshrs(config.m_mshr_entries, config.m_mshr_max_merge),
+        m_core_id(core_id),
         m_bandwidth_management(config) {
     init(name, config, memport, status);
   }
@@ -1225,6 +1232,7 @@ class baseline_cache : public cache_t {
       : m_config(config),
         m_tag_array(new_tag_array),
         m_mshrs(config.m_mshr_entries, config.m_mshr_max_merge),
+        m_core_id(core_id),
         m_bandwidth_management(config) {
     init(name, config, memport, status);
   }
@@ -1237,6 +1245,7 @@ class baseline_cache : public cache_t {
   std::list<mem_fetch *> m_miss_queue;
   enum mem_fetch_status m_miss_queue_status;
   mem_fetch_interface *m_memport;
+  int m_core_id; // which shader core is using this
 
   struct extra_mf_fields {
     extra_mf_fields() { m_valid = false; }

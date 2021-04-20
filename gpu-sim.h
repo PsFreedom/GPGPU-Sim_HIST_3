@@ -432,7 +432,7 @@ class gpgpu_sim_config : public power_config,
   unsigned hist_range;
   unsigned hist_flit;
   unsigned hist_queue;
-
+  
 };
 
 struct occupancy_stats {
