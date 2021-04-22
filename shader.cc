@@ -2380,6 +2380,8 @@ ldst_unit::ldst_unit(mem_fetch_interface *icnt,
                                  (mem_fetch *)NULL);
   }
   m_name = "MEM ";
+  printf("   HIST >> %s %d 1\n", __FUNCTION__, m_sid);
+  //hist_nw->fifo_init( m_sid, &m_response_fifo );
 }
 
 ldst_unit::ldst_unit(mem_fetch_interface *icnt,
@@ -2393,6 +2395,8 @@ ldst_unit::ldst_unit(mem_fetch_interface *icnt,
       m_next_wb(config) {
   init(icnt, mf_allocator, core, operand_collector, scoreboard, config,
        mem_config, stats, sid, tpc);
+  printf("   HIST >> %s %d 2\n", __FUNCTION__, m_sid);
+  //hist_nw->fifo_init( m_sid, &m_response_fifo );
 }
 
 void ldst_unit::issue(register_set &reg_set) {
@@ -4127,6 +4131,7 @@ simt_core_cluster::simt_core_cluster(class gpgpu_sim *gpu, unsigned cluster_id,
   m_stats = stats;
   m_memory_stats = mstats;
   m_mem_config = mem_config;
+  hist_nw->fifo_init( cluster_id, &m_response_fifo );
 }
 
 void simt_core_cluster::core_cycle() {

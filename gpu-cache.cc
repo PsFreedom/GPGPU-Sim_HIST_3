@@ -1143,7 +1143,7 @@ void baseline_cache::send_read_request(new_addr_type addr,
 // HIST Begin
     if( m_core_id >= 0 )
     {
-        printf("HIST >> m_core_id %d | Home %u\n", m_core_id, hist_home(mf->get_addr()) );
+        //printf("HIST >> m_core_id %d | Home %u\n", m_core_id, hist_home(mf->get_addr()) );
         mf->hist_set_type( HIST_PROBE );
         mf->hist_set_adr( mf->get_addr() );
         mf->hist_set_src( m_core_id );

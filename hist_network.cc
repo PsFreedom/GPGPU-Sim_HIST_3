@@ -11,7 +11,7 @@ unsigned total_SM;
 unsigned total_cluster;
 unsigned SM_per_cluster;
 
-/*
+
 class hist_network *hist_nw;
 
 hist_network::hist_network( unsigned flit, unsigned queue ): n_flit( flit ), n_queue( queue )
@@ -64,7 +64,7 @@ void hist_network::tagA_init( int core_id, tag_array *ptr )
 	printf("   HIST >> %s %d\n", __FUNCTION__, core_id);
 	sm_tag_array[core_id] = ptr;
 }
-
+/*
 void hist_network::miss_queue_push( int core_id, mem_fetch *mf )
 {
 	//printf("   HIST >> %s %d\n", __FUNCTION__, core_id);

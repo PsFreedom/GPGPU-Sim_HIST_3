@@ -11,7 +11,7 @@ extern unsigned total_SM;
 extern unsigned total_cluster;
 extern unsigned SM_per_cluster;
 
-/*
+
 extern class hist_network *hist_nw;
 
 class tag_array;
@@ -64,4 +64,3 @@ private:
 	unsigned long long tot_nw_count;
 };
 
-*/

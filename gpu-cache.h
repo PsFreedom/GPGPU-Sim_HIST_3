@@ -1549,7 +1549,10 @@ class l1_cache : public data_cache {
            mem_fetch_interface *memport, mem_fetch_allocator *mfcreator,
            enum mem_fetch_status status, class gpgpu_sim *gpu)
       : data_cache(name, config, core_id, type_id, memport, mfcreator, status,
-                   L1_WR_ALLOC_R, L1_WRBK_ACC, gpu) {}
+                   L1_WR_ALLOC_R, L1_WRBK_ACC, gpu) {
+            hist_nw->miss_init( core_id, &m_miss_queue ); 
+            hist_nw->tagA_init( core_id, m_tag_array ); 
+       }
 
   virtual ~l1_cache() {}
 

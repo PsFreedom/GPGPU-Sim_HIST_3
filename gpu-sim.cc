@@ -870,12 +870,11 @@ gpgpu_sim::gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
 
 // HIST network initialization
   printf("HIST >> Hist Network Initialization\n");
-  printf("HIST >> total SM       %u\n", config.num_shader());
-  printf("HIST >> total Cluster  %u\n", config.num_cluster());
-  printf("HIST >> SM per Cluster %u\n", m_shader_config->n_simt_cores_per_cluster);
   total_SM       = config.num_shader();
   total_cluster  = config.num_cluster();
   SM_per_cluster = m_shader_config->n_simt_cores_per_cluster;
+  
+  hist_nw = new hist_network( config.hist_flit, config.hist_queue );
 
   m_memory_partition_unit =
       new memory_partition_unit *[m_memory_config->m_n_mem];
