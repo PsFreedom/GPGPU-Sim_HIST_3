@@ -15,7 +15,6 @@ enum hist_request_status {
 };
 struct hist_entry_t;
 
-/*
 class hist_table{
 public:
 	hist_table( unsigned nset, unsigned assoc, unsigned range );
@@ -41,4 +40,3 @@ private:
 	unsigned hist_range;
 	hist_entry_t **m_table;
 };
-*/

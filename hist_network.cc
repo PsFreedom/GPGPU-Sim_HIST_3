@@ -1,8 +1,6 @@
 #include <math.h> 
 #include "gpu-sim.h"
 
-// #define cur_time (gpu_sim_cycle+gpu_tot_sim_cycle)
-
 unsigned SM_sqrt;
 unsigned hist_line_sz;
 unsigned hist_line_sz_log2;
@@ -64,7 +62,7 @@ void hist_network::tagA_init( int core_id, tag_array *ptr )
 	printf("   HIST >> %s %d\n", __FUNCTION__, core_id);
 	sm_tag_array[core_id] = ptr;
 }
-/*
+
 void hist_network::miss_queue_push( int core_id, mem_fetch *mf )
 {
 	//printf("   HIST >> %s %d\n", __FUNCTION__, core_id);
@@ -79,7 +77,7 @@ void hist_network::fifo_queue_push( int core_id, mem_fetch *mf )
 
 bool hist_network::hist_out_push( int core_id, mem_fetch *mf )
 {
-	int next_id = hist_out_next( core_id, mf->hin_dst() );
+	int next_id = hist_out_next( core_id, mf->hist_dst() );
 	if( hist_out[core_id][next_id].size() < n_queue ){
 		hist_out[core_id][next_id].push_back( mf );
 		return true;
@@ -89,7 +87,7 @@ bool hist_network::hist_out_push( int core_id, mem_fetch *mf )
 
 bool hist_network::hist_out_fush( int core_id, mem_fetch *mf )
 {
-	int next_id = hist_out_next( core_id, mf->hin_dst() );
+	int next_id = hist_out_next( core_id, mf->hist_dst() );
 	hist_out[core_id][next_id].push_back( mf );
 	return true;
 }
@@ -125,8 +123,8 @@ mem_fetch* hist_network::data_queue(std::list<mem_fetch*> **queue, int SM, int Q
 	
 	while( it != queue[SM][QID].end() )
 	{
-		if( (*it)->hin_type() == HIST_DATA ||
-			(*it)->hin_type() == HIST_FLIT )
+		if( (*it)->hist_type() == HIST_DATA ||
+			(*it)->hist_type() == HIST_FLIT )
 		{
 			return *it;
 		}
@@ -137,13 +135,14 @@ mem_fetch* hist_network::data_queue(std::list<mem_fetch*> **queue, int SM, int Q
 
 void hist_network::send_flit( int from, int to )
 {
-	for( unsigned i=0; i < n_flit; i++ )
+	for( unsigned i=1; i < n_flit; i++ )
 	{
 		mem_fetch *mf = (mem_fetch*)malloc(sizeof(mem_fetch));
-		mf->hin_set_type( HIST_FLIT );
-		mf->hin_set_src( from );
-		mf->hin_set_dst( to );
-		mf->hin_set_adr( 0 );
+		mf->hist_set_type( HIST_FLIT );
+		mf->hist_set_src( from );
+		mf->hist_set_dst( to );
+		mf->hist_set_adr( 0 );
+        mf->hist_set_stmp( cur_time );
 		hist_out_fush( from, mf );
 	}
 }
@@ -158,10 +157,11 @@ void hist_network::send_inv( int from, new_addr_type addr )
 		return;
 	
 	mem_fetch *mf = (mem_fetch*)malloc(sizeof(mem_fetch));
-	mf->hin_set_type( HIST_INVALIDATE );
-	mf->hin_set_src( from );
-	mf->hin_set_dst( hist_home(addr) );
-	mf->hin_set_adr( addr );
+	mf->hist_set_type( HIST_INVALIDATE );
+	mf->hist_set_src( from );
+	mf->hist_set_dst( hist_home(addr) );
+	mf->hist_set_adr( addr );
+    mf->hist_set_stmp( cur_time );
 	hist_out_fush( from, mf );
 }
 
@@ -174,7 +174,7 @@ void hist_network::hist_cycle()
 			if( !hist_out[SM][qid].empty() )
 			{
 				mem_fetch *mf = data_queue( hist_out, SM, qid );
-				NXT = mesh_next(SM, mf->hin_dst());
+				NXT = mesh_next(SM, mf->hist_dst());
 				
 				if( hist_in[NXT][qid].size() < n_queue ){
 					hist_in[NXT][qid].push_back(mf);
@@ -207,12 +207,12 @@ void hist_network::hist_cycle()
 bool hist_network::process_arrived_mf( mem_fetch *mf )
 {
 	bool ret = false;
-	int SM = mf->hin_dst();
-	hist_type mf_hist_type = mf->hin_type();
+	int   SM = mf->hist_dst();
+	enum hist_type_t mf_hist_type = mf->hist_type();
 
-	if( max_nw_time < cur_time - mf->hin_time() )
-		max_nw_time = cur_time - mf->hin_time();
-	tot_nw_time += cur_time - mf->hin_time();
+	if( max_nw_time < cur_time - mf->hist_time() )
+		max_nw_time = cur_time - mf->hist_time();
+	tot_nw_time += cur_time - mf->hist_time();
 	tot_nw_count++;
 	
 	switch( mf_hist_type ){
@@ -222,11 +222,11 @@ bool hist_network::process_arrived_mf( mem_fetch *mf )
 			probe_res = hist_tb->probe(mf->get_addr());
 			
 			stat_probe++;
-			switch(probe_res){
+			switch( probe_res ){
 				case HIST_MISS:
 				//	printf("   HIST >> HIST_MISS %#010x\n", hist_key(mf->get_addr()));
 					if( !mesh_in_range(mf->get_sid(), mf->get_addr(), hist_tb->get_range()) ){
-						mf->hin_set_type( HIST_REJECT_FULL );
+						mf->hist_set_type( HIST_REJECT_FULL );
 						miss_queue_push( mf->get_sid(), mf );
 						break;
 					}
@@ -234,7 +234,7 @@ bool hist_network::process_arrived_mf( mem_fetch *mf )
 					hist_tb->allocate( mf );
 					hist_tb->add_flag( mf );
 					
-					mf->hin_set_type( HIST_REJECT );
+					mf->hist_set_type( HIST_REJECT );
 					miss_queue_push( mf->get_sid(), mf );
 					stat_insert++;
 					break;
@@ -249,9 +249,10 @@ bool hist_network::process_arrived_mf( mem_fetch *mf )
 					break;
 				case HIST_HIT_READY:
 				//	printf("   HIST >> HIST_HIT_READY\n");
-					mf->hin_set_type( HIST_FORWARD );
-					mf->hin_set_src( SM );
-					mf->hin_set_dst( hist_tb->near_fwd(mf, mf->get_sid()) );
+					mf->hist_set_type( HIST_FORWARD );
+					mf->hist_set_src( SM );
+					mf->hist_set_dst( hist_tb->near_fwd(mf, mf->get_sid()) );
+                    mf->hist_set_stmp( cur_time );
 					hist_out_fush( SM, mf );
 					
 					if( mesh_in_range(mf->get_sid(), mf->get_addr(), hist_tb->get_range()) )
@@ -260,17 +261,17 @@ bool hist_network::process_arrived_mf( mem_fetch *mf )
 					stat_source++;
 					break;
 				default:
-				//	printf("   HIST >> HIST_FULL\n");
+					printf("   HIST >> HIST_FULL\n");
 					assert( probe_res == HIST_FULL );
-					mf->hin_set_type( HIST_REJECT_FULL );
+					mf->hist_set_type( HIST_REJECT_FULL );
 					miss_queue_push( mf->get_sid(), mf );
 					stat_full++;
 					break;
 			}
 			break;
 		case HIST_FILL:
-		//	printf("HIST >> SM[%2u] received HIST_FILL\n", SM);
-			hist_tb->fill_mf( mf->hin_adr() );
+			printf("HIST >> SM[%2u] received HIST_FILL\n", SM);
+			hist_tb->fill_mf( mf->hist_adr() );
 			ret = true;
 			break;
 		case HIST_DATA:
@@ -279,28 +280,29 @@ bool hist_network::process_arrived_mf( mem_fetch *mf )
 			break;
 		case HIST_FORWARD:
 			unsigned idx;
-		//	printf("HIST >> SM[%2u] received HIST_FORWARD\n", SM);
+			printf("HIST >> SM[%2u] received HIST_FORWARD\n", SM);
 		//	printf("   HIST >> Home %u Target %u\n", hist_home(mf->get_sid()), mf->get_sid());
-			if( sm_tag_array[SM]->probe( mf->get_addr(), idx ) == HIT ){
-			//	printf("   HIST >> probe HIT\n");
+			if( sm_tag_array[SM]->probe( mf->get_addr(), idx, mf ) == HIT ){
+				printf("   HIST >> probe HIT\n");
 				send_flit( SM, mf->get_sid() );
-				mf->hin_set_type( HIST_DATA );
-				mf->hin_set_src( SM );
-				mf->hin_set_dst( mf->get_sid() );
+				mf->hist_set_type( HIST_DATA );
+				mf->hist_set_src( SM );
+				mf->hist_set_dst( mf->get_sid() );
+				mf->hist_set_stmp( cur_time );
 				hist_out_fush( SM, mf );
 				stat_source_hit++;
 			}
 			else{
-			//	printf("   HIST >> probe MISS\n");
+				printf("   HIST >> probe MISS\n");
 				send_inv( SM, mf->get_addr() );
-				mf->hin_set_type( HIST_REJECT_FULL );
+				mf->hist_set_type( HIST_REJECT_FULL );
 				miss_queue_push( mf->get_sid(), mf );
 				stat_source_miss++;
 			}
 			break;
 		case HIST_INVALIDATE:
 		//	printf("HIST >> SM[%2u] received HIST_INVALIDATE\n", SM);
-			hist_tb->invalidate( mf->hin_src(), mf->hin_adr() );
+			hist_tb->invalidate( mf->hist_src(), mf->hist_adr() );
 			ret = true;
 			break;
 		default:
@@ -311,7 +313,6 @@ bool hist_network::process_arrived_mf( mem_fetch *mf )
 	}
 	return ret;
 }
-
 
 void hist_network::stat_print()
 {
@@ -354,5 +355,3 @@ void hist_network::print_queue_all()
 	}
 	printf("====================\n");
 }
-
-*/

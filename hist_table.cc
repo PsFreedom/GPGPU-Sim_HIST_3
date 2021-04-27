@@ -2,9 +2,7 @@
 #include "gpu-sim.h"
 
 #define total_entry (hist_nset*hist_assoc)
-// #define cur_time (gpu_sim_cycle+gpu_tot_sim_cycle)
 
-/*
 class hist_table *hist_tb;
 
 struct hist_entry_t
@@ -171,12 +169,12 @@ enum hist_request_status hist_table::probe( new_addr_type addr, unsigned &idx ) 
 		idx = invalid_line;
 		return HIST_MISS;
 	}
-	if( valid_line != (unsigned)-1 ){
-		idx = valid_line;
+    if( count_line != (unsigned)-1 ){
+		idx = count_line;
 		return HIST_MISS;
 	}
-	if( count_line != (unsigned)-1 ){
-		idx = count_line;
+	if( valid_line != (unsigned)-1 ){
+		idx = valid_line;
 		return HIST_MISS;
 	}
 	
@@ -246,9 +244,10 @@ void hist_table::fill_mf( new_addr_type addr )
 		mem_fetch *wait_mf = m_table[home][idx].m_wait_list.front();
 		
 		hist_nw->send_flit( home, wait_mf->get_sid() );
-		wait_mf->hin_set_type( HIST_DATA );
-		wait_mf->hin_set_src( home );
-		wait_mf->hin_set_dst( wait_mf->get_sid() );
+		wait_mf->hist_set_type( HIST_DATA );
+		wait_mf->hist_set_src( home );
+		wait_mf->hist_set_dst( wait_mf->get_sid() );
+		wait_mf->hist_set_stmp( cur_time );
 		hist_nw->hist_out_fush( home, wait_mf );
 		
 		m_table[home][idx].m_wait_list.pop_front();
@@ -299,5 +298,3 @@ int hist_table::near_fwd( mem_fetch *mf, int target )
 	assert( min_dist < total_SM );
 	return min_SM;
 }
-
-*/

@@ -84,6 +84,8 @@ bool g_interactive_debugger_enabled = false;
 
 tr1_hash_map<new_addr_type, unsigned> address_random_interleaving;
 
+class gpgpu_sim *m_gpu_ptr;
+
 /* Clock Domains */
 
 #define CORE 0x01
@@ -559,7 +561,7 @@ void gpgpu_sim_config::reg_options(option_parser_t opp) {
   option_parser_register(opp, "-hist_assoc_way", OPT_UINT32, &hist_assoc, 
             "number of HIST assoc ways", "32");
   option_parser_register(opp, "-hist_n_range", OPT_UINT32, &hist_range, 
-            "distance of HIST range", "9");
+            "distance of HIST range", "25");
   option_parser_register(opp, "-hist_n_flit", OPT_UINT32, &hist_flit, 
             "number of HIST flit", "8");
   option_parser_register(opp, "-hist_n_queue", OPT_UINT32, &hist_queue, 
@@ -874,7 +876,9 @@ gpgpu_sim::gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
   total_cluster  = config.num_cluster();
   SM_per_cluster = m_shader_config->n_simt_cores_per_cluster;
   
+  m_gpu_ptr = this;
   hist_nw = new hist_network( config.hist_flit, config.hist_queue );
+  hist_tb = new hist_table( config.hist_nset, config.hist_assoc, config.hist_range );
 
   m_memory_partition_unit =
       new memory_partition_unit *[m_memory_config->m_n_mem];
@@ -1269,6 +1273,7 @@ void gpgpu_sim::gpu_print_stat() {
   printf("gpu_occupancy = %.4f%% \n", gpu_occupancy.get_occ_fraction() * 100);
   printf("gpu_tot_occupancy = %.4f%% \n",
          (gpu_occupancy + gpu_tot_occupancy).get_occ_fraction() * 100);
+  hist_nw->stat_print();
 
   fprintf(statfout, "max_total_param_size = %llu\n",
           gpgpu_ctx->device_runtime->g_max_total_param_size);
@@ -1764,6 +1769,7 @@ void gpgpu_sim::cycle() {
     // shader core loading (pop from ICNT into core) follows CORE clock
     for (unsigned i = 0; i < m_shader_config->n_simt_clusters; i++)
       m_cluster[i]->icnt_cycle();
+    hist_nw->hist_cycle();
   }
   unsigned partiton_replys_in_parallel_per_cycle = 0;
   if (clock_mask & ICNT) {

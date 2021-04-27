@@ -62,7 +62,11 @@
 #define SAMPLELOG 222
 #define DUMPLOG 333
 
+#define cur_time (m_gpu_ptr->gpu_sim_cycle + m_gpu_ptr->gpu_tot_sim_cycle)
+
 class gpgpu_context;
+class gpgpu_sim;
+extern class gpgpu_sim *m_gpu_ptr;
 
 extern tr1_hash_map<new_addr_type, unsigned> address_random_interleaving;
 

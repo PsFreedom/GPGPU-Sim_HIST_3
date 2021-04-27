@@ -1072,6 +1072,21 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time) {
   }
   m_extra_mf_fields.erase(mf);
   m_bandwidth_management.use_fill_port(mf);
+  
+//	HIST
+    if( m_core_id >= 0 && 
+        mesh_in_range(mf->get_sid(), mf->get_addr(), hist_tb->get_range()) && 
+        mf->hist_type() == HIST_REJECT )
+    {
+        mem_fetch *filled_mf = (mem_fetch*)malloc(sizeof(mem_fetch));
+        filled_mf->hist_set_type( HIST_FILL );
+        filled_mf->hist_set_adr( mf->get_addr() );
+        filled_mf->hist_set_src( m_core_id );
+        filled_mf->hist_set_dst( hist_home(mf->get_addr()) );
+        filled_mf->hist_set_stmp( cur_time );
+
+        hist_nw->hist_out_fush( m_core_id, filled_mf );
+    }
 }
 
 /// Checks if mf is waiting to be filled by lower memory level
@@ -1127,6 +1142,8 @@ void baseline_cache::send_read_request(new_addr_type addr,
 
   } else if (!mshr_hit && mshr_avail &&
              (m_miss_queue.size() < m_config.m_miss_queue_size)) {
+    if( m_core_id >= 0 && hist_nw->hist_out_full(m_core_id, hist_home(mf->get_addr())) )
+        return;
     if (read_only)
       m_tag_array->access(block_addr, time, cache_index, mf);
     else
@@ -1148,8 +1165,9 @@ void baseline_cache::send_read_request(new_addr_type addr,
         mf->hist_set_adr( mf->get_addr() );
         mf->hist_set_src( m_core_id );
         mf->hist_set_dst( hist_home(mf->get_addr()) );
+        mf->hist_set_stmp( cur_time );
         
-        m_miss_queue.push_back(mf);
+        hist_nw->hist_out_fush( m_core_id, mf );
     }
     else{
         m_miss_queue.push_back(mf);
