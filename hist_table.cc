@@ -78,7 +78,7 @@ hist_table::hist_table( unsigned nset, unsigned assoc, unsigned range )
 	for( int i=0; i < total_SM; i++ ){
 		printf("   HIST >> Table[%d]\n", i);
 		m_table[i] = new hist_entry_t[total_entry];
-		print( i );
+	//	print( i );
 	}
 }
 
