@@ -1142,8 +1142,8 @@ void baseline_cache::send_read_request(new_addr_type addr,
 
   } else if (!mshr_hit && mshr_avail &&
              (m_miss_queue.size() < m_config.m_miss_queue_size)) {
-    if( m_core_id >= 0 && hist_nw->hist_out_full(m_core_id, hist_home(mf->get_addr())) )
-        return;
+    //if( m_core_id >= 0 && hist_nw->hist_out_full(m_core_id, hist_home(mf->get_addr())) )
+    //    return;
     if (read_only)
       m_tag_array->access(block_addr, time, cache_index, mf);
     else
