@@ -1085,7 +1085,8 @@ void baseline_cache::fill(mem_fetch *mf, unsigned time) {
         filled_mf->hist_set_dst( hist_home(mf->get_addr()) );
         filled_mf->hist_set_stmp( cur_time );
 
-        hist_nw->hist_out_fush( m_core_id, filled_mf );
+        //hist_nw->hist_out_fush( m_core_id, filled_mf );
+        hist_tb->fill_mf( filled_mf->hist_adr() );
     }
 }
 
@@ -1157,8 +1158,9 @@ void baseline_cache::send_read_request(new_addr_type addr,
         mshr_addr, mf->get_addr(), cache_index, mf->get_data_size(), m_config);
     mf->set_data_size(m_config.get_atom_sz());
     mf->set_addr(mshr_addr);
+    mf->set_status(m_miss_queue_status, time);
 // HIST Begin
-    if( m_core_id >= 0 )
+    if( m_core_id >= 0 && mesh_in_range(mf->get_sid(), mf->get_addr(), hist_tb->get_range()) )
     {
         //printf("HIST >> m_core_id %d | Home %u\n", m_core_id, hist_home(mf->get_addr()) );
         mf->hist_set_type( HIST_PROBE );
@@ -1173,7 +1175,6 @@ void baseline_cache::send_read_request(new_addr_type addr,
         m_miss_queue.push_back(mf);
     }
 // HIST End
-    mf->set_status(m_miss_queue_status, time);
     if (!wa) events.push_back(cache_event(READ_REQUEST_SENT));
 
     do_miss = true;

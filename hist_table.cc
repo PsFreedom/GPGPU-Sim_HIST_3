@@ -248,8 +248,9 @@ void hist_table::fill_mf( new_addr_type addr )
 		wait_mf->hist_set_src( home );
 		wait_mf->hist_set_dst( wait_mf->get_sid() );
 		wait_mf->hist_set_stmp( cur_time );
-		hist_nw->hist_out_fush( home, wait_mf );
-		
+        
+        hist_nw->fifo_queue_push( wait_mf->get_sid(), wait_mf );
+	//	hist_nw->hist_out_fush( home, wait_mf );
 		m_table[home][idx].m_wait_list.pop_front();
 	//	printf("      HIST >> %llu__%u_%u %s count = %u\n", hist_key(mf->get_addr()), home, idx, __FUNCTION__, m_table[home][idx].m_wait_list.size());
 	}
