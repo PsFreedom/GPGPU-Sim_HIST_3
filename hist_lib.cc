@@ -78,6 +78,7 @@ bool mesh_in_range( int sid, new_addr_type addr, int range )
 	
 	for( int i=0; i<total_SM; i++ ){
 		distance[i] = mesh_dist( i, home );
+        counter[i]  = total_SM;
 	}
 	for( int dist = 0; dist <= 2*SM_sqrt; dist++ ){
 		for( int SM = 0; SM < total_SM; SM++ ){
