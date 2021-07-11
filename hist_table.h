@@ -30,7 +30,8 @@ public:
 	void  fill_mf( new_addr_type addr );
 	void invalidate( int sid, new_addr_type addr );
 
-	int near_fwd( mem_fetch *mf, int target );
+	int  near_fwd( mem_fetch *mf, int target );
+    void shortest_trip( mem_fetch *mf );
 	unsigned get_range() const{ return hist_range; };
 	unsigned hist_set( new_addr_type addr ) const;
 	

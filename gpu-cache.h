@@ -104,6 +104,7 @@ const char *cache_request_status_str(enum cache_request_status status);
 
 struct cache_block_t {
   cache_block_t() {
+    m_core_id = -1;
     m_tag = 0;
     m_block_addr = 0;
   }
@@ -138,6 +139,7 @@ struct cache_block_t {
   virtual void print_status() = 0;
   virtual ~cache_block_t() {}
 
+  int m_core_id;
   new_addr_type m_tag;
   new_addr_type m_block_addr;
 };
@@ -154,6 +156,7 @@ struct line_cache_block : public cache_block_t {
   }
   void allocate(new_addr_type tag, new_addr_type block_addr, unsigned time,
                 mem_access_sector_mask_t sector_mask) {
+    hist_nw->send_inv( m_core_id, m_tag );
     m_tag = tag;
     m_block_addr = block_addr;
     m_alloc_time = time;
@@ -182,6 +185,8 @@ struct line_cache_block : public cache_block_t {
   }
   virtual void set_status(enum cache_block_state status,
                           mem_access_sector_mask_t sector_mask) {
+    if( status != VALID && status != MODIFIED )
+        hist_nw->send_inv( m_core_id, m_tag );
     m_status = status;
   }
   virtual unsigned long long get_last_access_time() {
@@ -252,6 +257,7 @@ struct sector_cache_block : public cache_block_t {
     // allocate a new line
     // assert(m_block_addr != 0 && m_block_addr != block_addr);
     init();
+    hist_nw->send_inv( m_core_id, m_tag );
     m_tag = tag;
     m_block_addr = block_addr;
 
@@ -341,6 +347,8 @@ struct sector_cache_block : public cache_block_t {
                           mem_access_sector_mask_t sector_mask) {
     unsigned sidx = get_sector_index(sector_mask);
     m_status[sidx] = status;
+    if( status != VALID && status != MODIFIED )
+        hist_nw->send_inv( m_core_id, m_tag );
   }
 
   virtual unsigned long long get_last_access_time() {

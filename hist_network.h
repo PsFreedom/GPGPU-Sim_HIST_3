@@ -2,6 +2,7 @@
 
 #define total_Q (SM_sqrt*SM_sqrt)
 #define Q_ports 5
+#define MAX_trip 3
 
 extern unsigned SM_sqrt;
 extern unsigned hist_line_sz;
@@ -39,6 +40,8 @@ public:
 	void stat_print();
 	void print_queue( int SM );
 	void print_queue_all();
+    
+    unsigned long long stat_trip[MAX_trip];
 	
 private:
 	std::list<mem_fetch*> **hist_out;
@@ -59,6 +62,8 @@ private:
 	unsigned long long stat_source;
 	unsigned long long stat_source_hit;
 	unsigned long long stat_source_miss;
+	unsigned long long stat_source_miss_sector;
+	unsigned long long stat_source_else;
 	unsigned long long tot_nw_time;
 	unsigned long long tot_nw_count;
 };

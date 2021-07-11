@@ -145,12 +145,16 @@ class mem_fetch {
   new_addr_type    hist_adr() { return m_hist_adr; }
   unsigned         hist_src() { return m_hist_src; }
   unsigned         hist_dst() { return m_hist_dst; }
+  unsigned         hist_dst2(){ return m_hist_dst2; }
+  unsigned         hist_dst3(){ return m_hist_dst3; }
   unsigned long long hist_time(){ return m_hist_cycle; }
 
   void hist_set_type( enum hist_type_t type ){ m_hist_type = type; }
   void hist_set_adr( new_addr_type adr ){ m_hist_adr = adr; }
-  void hist_set_src( unsigned src ){ m_hist_src = src; }
-  void hist_set_dst( unsigned dst ){ m_hist_dst = dst; }
+  void hist_set_src(  unsigned src ){ m_hist_src  = src; }
+  void hist_set_dst(  unsigned dst ){ m_hist_dst  = dst; }
+  void hist_set_dst2( unsigned dst ){ m_hist_dst2 = dst; }
+  void hist_set_dst3( unsigned dst ){ m_hist_dst3 = dst; }
   void hist_set_stmp( unsigned long long cycle ){ m_hist_cycle = cycle; }
 
  private:
@@ -165,6 +169,8 @@ class mem_fetch {
   new_addr_type    m_hist_adr;
   unsigned         m_hist_src;
   unsigned         m_hist_dst;
+  unsigned         m_hist_dst2;
+  unsigned         m_hist_dst3;
   unsigned long long m_hist_cycle;
 
   // where is this request now?

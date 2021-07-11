@@ -194,6 +194,9 @@ tag_array::tag_array(cache_config &config, int core_id, int type_id)
   } else
     assert(0);
 
+  for (unsigned i = 0; i < cache_lines_num; ++i)
+    m_lines[i]->m_core_id = core_id;
+
   init(core_id, type_id);
 }
 
@@ -414,11 +417,13 @@ void tag_array::fill(unsigned index, unsigned time, mem_fetch *mf) {
 void tag_array::flush() {
   if (!is_used) return;
 
-  for (unsigned i = 0; i < m_config.get_num_lines(); i++)
+  for (unsigned i = 0; i < m_config.get_num_lines(); i++){
+    hist_nw->send_inv( m_core_id, m_lines[i]->m_tag );
     if (m_lines[i]->is_modified_line()) {
       for (unsigned j = 0; j < SECTOR_CHUNCK_SIZE; j++)
         m_lines[i]->set_status(INVALID, mem_access_sector_mask_t().set(j));
     }
+  }
 
   is_used = false;
 }
@@ -426,10 +431,11 @@ void tag_array::flush() {
 void tag_array::invalidate() {
   if (!is_used) return;
 
-  for (unsigned i = 0; i < m_config.get_num_lines(); i++)
+  for (unsigned i = 0; i < m_config.get_num_lines(); i++){
+    hist_nw->send_inv( m_core_id, m_lines[i]->m_tag );
     for (unsigned j = 0; j < SECTOR_CHUNCK_SIZE; j++)
       m_lines[i]->set_status(INVALID, mem_access_sector_mask_t().set(j));
-
+  }
   is_used = false;
 }
 

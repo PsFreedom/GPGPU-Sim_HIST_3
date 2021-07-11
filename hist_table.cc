@@ -141,6 +141,7 @@ enum hist_request_status hist_table::probe( new_addr_type addr, unsigned &idx ) 
 					return HIST_MISS;
 					break;
 				default:
+                    assert( 0 );
 					break;
 			}
 		}
@@ -223,7 +224,7 @@ void hist_table::add_mf( mem_fetch *mf )
 	unsigned idx;
 	unsigned home = hist_home( mf->get_addr() );
 	
-//	assert( mesh_in_range( mf->get_sid(), mf->get_addr(), hist_range ) );
+	assert( mesh_in_range( mf->get_sid(), mf->get_addr(), hist_range ) );
 	assert( probe( mf->get_addr(), idx ) == HIST_HIT_WAIT );
 	
 	m_table[home][idx].m_wait_list.push_back( mf );
@@ -239,7 +240,7 @@ void hist_table::fill_mf( new_addr_type addr )
 	m_table[home][idx].m_status = HIST_READY;
 //	printf("      HIST >> %llu__%u_%u %s HIST_READY count %u\n", hist_key(mf->get_addr()), home, idx, __FUNCTION__, m_table[home][idx].count());
 
-	while( m_table[home][idx].m_wait_list.size() > 0 )
+	while( !m_table[home][idx].m_wait_list.empty() )
 	{
 		mem_fetch *wait_mf = m_table[home][idx].m_wait_list.front();
 		
@@ -249,6 +250,7 @@ void hist_table::fill_mf( new_addr_type addr )
 		wait_mf->hist_set_dst( wait_mf->get_sid() );
 		wait_mf->hist_set_stmp( cur_time );
         
+        // Direct push to SM FIFO queue
         hist_nw->fifo_queue_push( wait_mf->get_sid(), wait_mf );
 	//	hist_nw->hist_out_fush( home, wait_mf );
 		m_table[home][idx].m_wait_list.pop_front();
@@ -265,7 +267,7 @@ void hist_table::invalidate( int sid, new_addr_type addr )
 	if( probe( addr, idx ) != HIST_HIT_READY )
 		return;
 
-//	printf("      HIST >> %s count %u\n", __FUNCTION__, m_table[home][idx].count());
+//	printf("   HIST >> %s count %u\n", __FUNCTION__, m_table[home][idx].count());
 	m_table[home][idx].m_flag[sid] = false;
 	if( m_table[home][idx].count() == 0 ){
 		m_table[home][idx].m_status = HIST_INVALID;
@@ -279,7 +281,7 @@ int hist_table::near_fwd( mem_fetch *mf, int target )
 	unsigned idx, distance, min_dist;
 	unsigned home = hist_home( mf->get_addr() );
 	
-//	assert( mesh_in_range( mf->get_sid(), mf->get_addr(), hist_range ) );
+	assert( mesh_in_range( mf->get_sid(), mf->get_addr(), hist_range ) );
 	assert( probe( mf->get_addr(), idx ) == HIST_HIT_READY );
 //	printf("      HIST >> %llu__%u_%u %s available = %u\n", hist_key(mf->get_addr()), home, idx, __FUNCTION__, m_table[home][idx].count());
 	
@@ -298,4 +300,79 @@ int hist_table::near_fwd( mem_fetch *mf, int target )
 	assert( min_SM < total_SM );
 	assert( min_dist < total_SM );
 	return min_SM;
+}
+
+void hist_table::shortest_trip( mem_fetch *mf )
+{
+    unsigned trip, idx, SM1, SM2, SM3, dist, min;
+	unsigned home = hist_home( mf->get_addr() );
+    
+    assert( mesh_in_range( mf->get_sid(), mf->get_addr(), hist_range ) );
+	assert( probe( mf->get_addr(), idx ) == HIST_HIT_READY );
+    
+    if( m_table[home][idx].count() < MAX_trip ){
+        trip = m_table[home][idx].count();
+        hist_nw->stat_trip[trip-1]++;
+    }
+    else{
+        trip = MAX_trip;
+        hist_nw->stat_trip[trip-1]++;
+    }
+    
+    min = total_SM*MAX_trip;
+    if( trip == 1 ){
+        for( SM1=0; SM1<total_SM; SM1++ ){
+            if( m_table[home][idx].m_flag[SM1] == true ){
+                dist = mesh_dist( home, SM1 );
+                if( dist < min ){
+                    mf->hist_set_dst(  SM1 );
+                    mf->hist_set_dst2( SM1 );
+                    mf->hist_set_dst3( SM1 );
+                }
+            }
+        }
+    }
+    else if( trip == 2 ){
+        for( SM1=0; SM1<total_SM; SM1++ ){
+            for( SM2=0; SM2<total_SM; SM2++ ){
+                if( m_table[home][idx].m_flag[SM1] == true && 
+                    m_table[home][idx].m_flag[SM2] == true && 
+                    SM1 != SM2 )
+                {
+                    dist  = mesh_dist( home, SM1 );
+                    dist += mesh_dist(  SM1, SM2 );
+                    if( dist < min ){
+                        mf->hist_set_dst(  SM1 );
+                        mf->hist_set_dst2( SM2 );
+                        mf->hist_set_dst3( SM2 );
+                    }
+                }
+            }
+        }
+    }
+    else if( trip == 3 ){
+        for( SM1=0; SM1<total_SM; SM1++ ){
+            for( SM2=0; SM2<total_SM; SM2++ ){
+                for( SM3=0; SM3<total_SM; SM3++ ){
+                    if( m_table[home][idx].m_flag[SM1] == true && 
+                        m_table[home][idx].m_flag[SM2] == true && 
+                        m_table[home][idx].m_flag[SM3] == true && 
+                        SM1 != SM2 && SM1 != SM3 && SM2 != SM3 )
+                    {
+                        dist  = mesh_dist( home, SM1 );
+                        dist += mesh_dist(  SM1, SM2 );
+                        dist += mesh_dist(  SM2, SM3 );
+                        if( dist < min ){
+                            mf->hist_set_dst(  SM1 );
+                            mf->hist_set_dst2( SM2 );
+                            mf->hist_set_dst3( SM3 );
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else{
+        assert(0);
+    }
 }
